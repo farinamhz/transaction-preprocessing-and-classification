@@ -95,7 +95,7 @@ def correlation_matrix():
     correlation = dataset_class.corr()
     # plt.figure(figsize=(14, 14))
     sb.heatmap(data=correlation, square=True, annot=True, vmin=-1, vmax=1, center=0,
-               cmap='coolwarm', annot_kws={"size": 5, "weight": "bold"})
+               cmap='coolwarm', annot_kws={"size": 5}, linewidths=2, linecolor='black')
     plt.show()
 
 
