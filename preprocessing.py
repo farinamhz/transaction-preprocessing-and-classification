@@ -4,13 +4,26 @@ import pandas as pd
 import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelBinarizer, OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
 
 OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
 
-# def read_data():
-interactions = pd.read_excel('interactions.xlsx')
-dataset = pd.read_excel('dataset.xls')
+# read_data
+interactions = pd.read_excel('interactions.xlsx', index_col=0)
+dataset = pd.read_excel('dataset.xls', index_col=0)
+
+# drop NaN
+dataset.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
+dataset = dataset.reset_index()
+
+# drop index column
+dataset.drop(["index"], axis=1, inplace=True)
+# print(dataset.head())
+
 dataset_len = len(dataset)
 
 
@@ -68,7 +81,7 @@ def correlation_matrix():
             dataset.loc[i, 'DateDiff'] = 1
         else:
             dataset.loc[i, 'DateDiff'] = 0
-    # print(dataset)
+    # dataset_class includes won or fail AND progress_class includes In progress
     dataset_class = dataset
     progress_dataset = dataset.loc[dataset.Stage == 'In Progress', dataset.columns]
     progress_dataset.reset_index(drop=True, inplace=True)
@@ -84,6 +97,7 @@ def correlation_matrix():
     deal_class = dataset_class['Stage']
     dataset_class = dataset_class.drop(['Stage'], axis=1)
 
+    # get products
     s = (dataset_class.dtypes == 'object')
     products = list(s[s].index)
 
@@ -98,26 +112,29 @@ def correlation_matrix():
                cmap='coolwarm', annot_kws={"size": 15}, linewidths=2, linecolor='black', )
     plt.show()
 
+    return dataset_class, deal_class, progress_dataset
 
-correlation_matrix()
+
+dataset_class, deal_class, progress_dataset = correlation_matrix()
 
 
-# def plotCorrelationMatrix(df, graphWidth):
-#     df = df.dropna('columns') # drop columns with NaN
-#     df = df[[col for col in df if df[col].nunique() > 1]] # keep columns where there are more than 1 unique values
-#     if df.shape[1] < 2:
-#         print(f'No correlation plots shown: The number of non-NaN or constant columns ({df.shape[1]}) is less than 2')
-#         return
-#     corr = df.corr()
-#     print(corr)
-#     plt.figure(num=None, figsize=(graphWidth, graphWidth), dpi=80, facecolor='w', edgecolor='k')
-#     corrMat = plt.matshow(corr, fignum = 1)
-#     plt.xticks(range(len(corr.columns)), corr.columns, rotation=90)
-#     plt.yticks(range(len(corr.columns)), corr.columns)
-#     plt.gca().xaxis.tick_bottom()
-#     plt.colorbar(corrMat)
-#     plt.title('Correlation Matrix for transactions', fontsize=15)
-#     plt.show()
-#
-#
-# plotCorrelationMatrix(dataset, dataset.get_width())
+def get_f1_and_accuracy():
+    global dataset, deal_class
+    lb = MultiLabelBinarizer()
+    # print(len(dataset) == len(dataset_class))
+    lb.fit_transform(dataset_class.values.tolist())
+    train_X, val_X, train_y, val_y = train_test_split(dataset_class, deal_class, random_state=0)
+
+    # logistic regression object
+    lr = LogisticRegression()
+
+    # train the model on train set
+    lr.fit(train_X, train_y)
+    print(val_X)
+    pred = lr.predict(val_X)
+
+    # print classification report
+    print(classification_report(val_y, pred))
+
+
+get_f1_and_accuracy()
