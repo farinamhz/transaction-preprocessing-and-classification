@@ -8,13 +8,41 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
 
 # read_data
 interactions = pd.read_excel('interactions.xlsx', index_col=0)
 dataset = pd.read_excel('dataset.xls', index_col=0)
+
+
+def interaction_analysis():
+    global interactions, dataset
+    analyser = SentimentIntensityAnalyzer()
+    scores = []
+    text = interactions['Extracted Interaction Text']
+    for sentence in text:
+        score = analyser.polarity_scores(sentence)
+        scores.append(score)
+
+    # Converting List of Dictionaries into Dataframe
+    score_dataframe = pd.DataFrame(scores)
+    interactions = pd.concat([interactions, score_dataframe.compound],axis=1)
+    # merging interaction score in sales pipeline file
+    # Calculating product acceptance rate for as product of a company or won to total opportunities for a company
+    #
+    for em in interactions.fromEmailId.unique():
+        # interactions.loc[(interactions['fromEmailId']==em),'compound']=(interactions['compound'].where(interactions['fromEmailId']==em)).mean()
+        dataset.loc[dataset['SalesAgentEmailID'] == em, 'interaction_score'] =\
+            (interactions['compound'].where(interactions['fromEmailId'] == em)).mean()
+    for cm in dataset.ContactEmailID.unique():
+        dataset.loc[dataset['ContactEmailID'] == cm, 'prod_acc_rate'] =\
+            (dataset.loc[dataset['ContactEmailID'] == cm, 'Product']).where(dataset.Stage == 'Won').count() /\
+            (dataset.loc[dataset['ContactEmailID'] == cm, 'Product']).count()
+    print(dataset['prod_acc_rate'])
+    # Finish In(9)/ Birdie shape link
+
 
 # drop NaN
 dataset.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
