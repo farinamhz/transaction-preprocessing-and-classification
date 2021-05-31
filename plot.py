@@ -15,16 +15,16 @@ from sklearn.preprocessing import OneHotEncoder,LabelBinarizer
 # # Converting List of Dictionaries into Dataframe
 # dataFrame = pd.DataFrame(scores)
 # interactions= pd.concat([interactions,dataFrame.compound],axis=1)
-# sales_data=pd.read_excel('dataset.xls')
+# dataset=pd.read_excel('dataset.xls')
 # #merging interaction score in sales pipeline file
 # #Calculating product acceptance rate for as product of a company or won to total opportunities for a company
 # #
 # for em in interactions.fromEmailId.unique():
 #      #interactions.loc[(interactions['fromEmailId']==em),'compound']=(interactions['compound'].where(interactions['fromEmailId']==em)).mean()
-#     sales_data.loc[sales_data['SalesAgentEmailID']==em,'interaction_score']=(interactions['compound'].where(interactions['fromEmailId']==em)).mean()
-# for cm in sales_data.ContactEmailID.unique():
-#     sales_data.loc[sales_data['ContactEmailID']==cm,'prod_acc_rate']=(sales_data.loc[sales_data['ContactEmailID']==cm,'Product']).where(sales_data.Stage=='Won').count()/(sales_data.loc[sales_data['ContactEmailID']==cm,'Product']).count()
-# print(sales_data['prod_acc_rate'])
+#     dataset.loc[dataset['SalesAgentEmailID'] == em, 'interaction_score']=(interactions['compound'].where(interactions['fromEmailId'] == em)).mean()
+# for cm in dataset.ContactEmailID.unique():
+#     dataset.loc[dataset['ContactEmailID'] == cm, 'prod_acc_rate']= (dataset.loc[dataset['ContactEmailID'] == cm, 'Product']).where(dataset.Stage == 'Won').count() / (dataset.loc[dataset['ContactEmailID'] == cm, 'Product']).count()
+# print(dataset['prod_acc_rate'])
 # Finish In(9)/ Birdie shape link
 
 
@@ -39,19 +39,6 @@ from sklearn.preprocessing import OneHotEncoder,LabelBinarizer
 # plt.show()
 # sb.barplot(y='Customer',x='prod_acc_rate',data=sales_data,ax=ax)
 # plt.show()
-
-
-
-# In(16) define a new function
-OH_enc = OneHotEncoder(handle_unknown='ignore',sparse= False)
-#function to one hot encode columns
-def OHE(df,col):
-    encprod=pd.DataFrame(OH_enc.fit_transform(df[col]))
-    encprod.index = df.index
-    encprod.columns=OH_enc.get_feature_names(col)
-    df=pd.concat([df,encprod],axis=1)
-    df=df.drop(col,axis=1)
-    return df
 
 
 
