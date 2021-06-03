@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
@@ -146,23 +146,21 @@ def correlation_matrix():
 dataset_class, deal_class, progress_dataset = correlation_matrix()
 
 
-def get_f1_and_accuracy():
-    global dataset, deal_class
+def logistic_regression():
+    global dataset, deal_class, dataset_class
     lb = MultiLabelBinarizer()
-    # print(len(dataset) == len(dataset_class))
     lb.fit_transform(dataset_class.values.tolist())
-    train_X, val_X, train_y, val_y = train_test_split(dataset_class, deal_class, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
-    # logistic regression object
     lr = LogisticRegression()
+    lr.fit(X_train, y_train)
+    pred = lr.predict(X_test)
 
-    # train the model on train set
-    lr.fit(train_X, train_y)
-    print(val_X)
-    pred = lr.predict(val_X)
-
-    # print classification report
-    print(classification_report(val_y, pred))
+    # print report
+    print('*** Logistic Regression Classification ***', end='\n\n')
+    print('Confusion Matrix:\n', confusion_matrix(y_test, pred), end='\n\n')
+    print('Classification Report:\n', classification_report(y_test, pred), end='\n\n')
+    print('Accuracy:\n', accuracy_score(y_test, pred), end='\n\n')
 
 
-get_f1_and_accuracy()
+logistic_regression()
