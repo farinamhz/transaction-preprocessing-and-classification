@@ -204,3 +204,33 @@ def decision_tree():
 
 
 decision_tree()
+
+
+def gaussian_naive_bayes():
+    # # train
+    # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+
+    nb_classifier = GaussianNB()
+    nb_classifier.fit(X_train, y_train)
+    pred = nb_classifier.predict(X_test)
+
+    # print report
+    print_report("Gaussian Naive Bayes", y_test, pred)
+
+
+gaussian_naive_bayes()
+
+
+def knn():
+    # # train
+    # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+
+    knn_classifier = KNeighborsClassifier()
+    knn_classifier.fit(X_train, y_train)
+    pred = knn_classifier.predict(X_test)
+
+    # print report
+    print_report("KNN", y_test, pred)
+
+
+knn()
