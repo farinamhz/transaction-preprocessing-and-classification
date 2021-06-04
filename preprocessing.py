@@ -173,9 +173,9 @@ logistic_regression()
 
 def random_forest():
     global X_train, y_train, X_test
-    lr = RandomForestClassifier()
-    lr.fit(X_train, y_train)
-    pred = lr.predict(X_test)
+    classifier = RandomForestClassifier()
+    classifier.fit(X_train, y_train)
+    pred = classifier.predict(X_test)
 
     # print report
     print_report("Random Forest", y_test, pred)
