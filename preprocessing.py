@@ -1,12 +1,11 @@
-from datetime import datetime
-
 import pandas as pd
 import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
-from sklearn.linear_model import LogisticRegression
+# from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
@@ -50,19 +49,16 @@ dataset = dataset.reset_index()
 
 # drop index column
 dataset.drop(["index"], axis=1, inplace=True)
-# print(dataset.head())
 
 dataset_len = len(dataset)
 
-
+'''''
 def plot_product_close_value():
     f, ax = plt.subplots(figsize=(12, 12))
     sb.boxplot(x='Product', y='Close_Value', hue='Stage', data=dataset, ax=ax)
     plt.show()
+'''''
 
-
-# read_data()
-# plot_product_close_value()
 
 def new_feature():
     global dataset
@@ -146,21 +142,44 @@ def correlation_matrix():
 dataset_class, deal_class, progress_dataset = correlation_matrix()
 
 
-def logistic_regression():
-    global dataset, deal_class, dataset_class
-    lb = MultiLabelBinarizer()
-    lb.fit_transform(dataset_class.values.tolist())
-    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+# train
+lb = MultiLabelBinarizer()
+lb.fit_transform(dataset_class.values.tolist())
+X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
+
+def print_report(name, y_test_internal, pred_internal):
+    # print report
+    print('*** {} Classification Report ***'.format(name), end='\n\n')
+    print('Confusion Matrix:\n', confusion_matrix(y_test_internal, pred_internal), end='\n\n')
+    print('Classification Report:\n', classification_report(y_test_internal, pred_internal), end='\n\n')
+    print('Accuracy:\n', accuracy_score(y_test_internal, pred_internal), end='\n\n')
+
+
+'''''
+def logistic_regression():
+    global X_train, y_train, X_test
     lr = LogisticRegression()
     lr.fit(X_train, y_train)
     pred = lr.predict(X_test)
 
     # print report
-    print('*** Logistic Regression Classification ***', end='\n\n')
-    print('Confusion Matrix:\n', confusion_matrix(y_test, pred), end='\n\n')
-    print('Classification Report:\n', classification_report(y_test, pred), end='\n\n')
-    print('Accuracy:\n', accuracy_score(y_test, pred), end='\n\n')
+    print_report("Logistic Regression", y_test, pred)
 
 
 logistic_regression()
+'''''
+
+
+def random_forest():
+    global X_train, y_train, X_test
+    lr = RandomForestClassifier()
+    lr.fit(X_train, y_train)
+    pred = lr.predict(X_test)
+
+    # print report
+    print_report("Random Forest", y_test, pred)
+
+
+random_forest()
+
