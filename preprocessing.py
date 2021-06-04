@@ -6,11 +6,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
 
@@ -225,12 +228,24 @@ def knn():
     # # train
     # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
+    pca = make_pipeline(StandardScaler(),
+                        PCA(n_components=2))
+    pca.fit(X_train, y_train)
+
     knn_classifier = KNeighborsClassifier()
     knn_classifier.fit(X_train, y_train)
+
+    X_embedded = pca.transform(X_train)
+    plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=['red' if item == 'Won' else 'blue' for item in y_train.tolist()],
+                s=30, cmap='Set1')
+    plt.show()
+
     pred = knn_classifier.predict(X_test)
 
     # print report
-    print_report("KNN", y_test, pred)
-
-
+    print_report("KNN", y_test.values, pred)
+    #
+    # print(y_train)
+    # print("***")
+    # print(y_train.tolist())
 knn()
