@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
-# from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.tree import DecisionTreeClassifier
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
@@ -142,10 +143,8 @@ def correlation_matrix():
 dataset_class, deal_class, progress_dataset = correlation_matrix()
 
 
-# train
 lb = MultiLabelBinarizer()
 lb.fit_transform(dataset_class.values.tolist())
-X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
 
 def print_report(name, y_test_internal, pred_internal):
@@ -158,7 +157,9 @@ def print_report(name, y_test_internal, pred_internal):
 
 '''''
 def logistic_regression():
-    global X_train, y_train, X_test
+    # train
+    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+
     lr = LogisticRegression()
     lr.fit(X_train, y_train)
     pred = lr.predict(X_test)
@@ -172,7 +173,9 @@ logistic_regression()
 
 
 def random_forest():
-    global X_train, y_train, X_test
+    # train
+    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+
     classifier = RandomForestClassifier()
     classifier.fit(X_train, y_train)
     pred = classifier.predict(X_test)
@@ -183,3 +186,17 @@ def random_forest():
 
 random_forest()
 
+
+def decision_tree():
+    # train
+    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+
+    classifier = DecisionTreeClassifier()
+    classifier.fit(X_train, y_train)
+    pred = classifier.predict(X_test)
+
+    # print report
+    print_report("Decision Tree", y_test, pred)
+
+
+decision_tree()
