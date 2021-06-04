@@ -4,6 +4,8 @@ import seaborn as sb
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
@@ -145,6 +147,8 @@ dataset_class, deal_class, progress_dataset = correlation_matrix()
 
 lb = MultiLabelBinarizer()
 lb.fit_transform(dataset_class.values.tolist())
+# train
+X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
 
 def print_report(name, y_test_internal, pred_internal):
@@ -173,12 +177,12 @@ logistic_regression()
 
 
 def random_forest():
-    # train
-    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+    # # train
+    # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
-    classifier = RandomForestClassifier()
-    classifier.fit(X_train, y_train)
-    pred = classifier.predict(X_test)
+    rf_classifier = RandomForestClassifier()
+    rf_classifier.fit(X_train, y_train)
+    pred = rf_classifier.predict(X_test)
 
     # print report
     print_report("Random Forest", y_test, pred)
@@ -188,12 +192,12 @@ random_forest()
 
 
 def decision_tree():
-    # train
-    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+    # # train
+    # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
-    classifier = DecisionTreeClassifier()
-    classifier.fit(X_train, y_train)
-    pred = classifier.predict(X_test)
+    dt_classifier = DecisionTreeClassifier()
+    dt_classifier.fit(X_train, y_train)
+    pred = dt_classifier.predict(X_test)
 
     # print report
     print_report("Decision Tree", y_test, pred)
