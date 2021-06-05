@@ -111,7 +111,7 @@ def correlation_matrix():
             dataset.loc[i, 'DateDiff'] = 1
         else:
             dataset.loc[i, 'DateDiff'] = 0
-    # dataset_class includes won or fail AND progress_class includes In progress
+    # dataset_class includes won or lost AND progress_class includes In progress
     dataset_class = dataset
     progress_dataset = dataset.loc[dataset.Stage == 'In Progress', dataset.columns]
     progress_dataset.reset_index(drop=True, inplace=True)
@@ -228,6 +228,7 @@ def knn():
     # # train
     # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
+    # dimensionality reduction
     pca = make_pipeline(StandardScaler(),
                         PCA(n_components=2))
     pca.fit(X_train, y_train)
@@ -235,6 +236,7 @@ def knn():
     knn_classifier = KNeighborsClassifier()
     knn_classifier.fit(X_train, y_train)
 
+    # dimensionality reduction and show plot
     X_embedded = pca.transform(X_train)
     plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=['red' if item == 'Won' else 'blue' for item in y_train.tolist()],
                 s=30, cmap='Set1')
@@ -242,10 +244,7 @@ def knn():
 
     pred = knn_classifier.predict(X_test)
 
-    # print report
     print_report("KNN", y_test.values, pred)
-    #
-    # print(y_train)
-    # print("***")
-    # print(y_train.tolist())
+
+
 knn()
