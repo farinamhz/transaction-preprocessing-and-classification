@@ -187,6 +187,16 @@ def random_forest():
     rf_classifier.fit(X_train, y_train)
     pred = rf_classifier.predict(X_test)
 
+    # printing the confusion matrix
+    LABELS = ['Won', 'Lost']
+    conf_matrix = confusion_matrix(y_test, pred)
+    plt.figure(figsize=(12, 12))
+    sb.heatmap(conf_matrix, xticklabels=LABELS,
+               yticklabels=LABELS, annot=True, fmt="d", cmap='coolwarm')
+    plt.title("Confusion matrix")
+    plt.ylabel('True class')
+    plt.xlabel('Predicted class')
+    plt.show()
     # print report
     print_report("Random Forest", y_test, pred)
 
