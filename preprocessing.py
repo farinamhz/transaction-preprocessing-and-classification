@@ -21,7 +21,7 @@ OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
 interactions = pd.read_excel('interactions.xlsx', index_col=0)
 dataset = pd.read_excel('dataset.xls', index_col=0)
 
-
+'''''
 def interaction_analysis():
     global interactions, dataset
     analyser = SentimentIntensityAnalyzer()
@@ -47,7 +47,7 @@ def interaction_analysis():
             (dataset.loc[dataset['ContactEmailID'] == cm, 'Product']).count()
     print(dataset['prod_acc_rate'])
     # Finish In(9)/ Birdie shape link
-
+'''''
 
 # drop NaN
 dataset.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
@@ -186,6 +186,9 @@ def random_forest():
     # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
     rf_classifier = RandomForestClassifier()
+
+    # print(np.mean(cross_val_score(clf, X_train, y_train, cv=10)))
+
     rf_classifier.fit(X_train, y_train)
     pred = rf_classifier.predict(X_test)
 
