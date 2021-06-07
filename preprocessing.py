@@ -18,8 +18,8 @@ from sklearn.preprocessing import StandardScaler
 OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
 
 # read_data
-interactions = pd.read_excel('interactions.xlsx', index_col=0)
-dataset = pd.read_excel('dataset.xls', index_col=0)
+interactions = pd.read_excel('interactions.xlsx')
+dataset = pd.read_excel('dataset.xls')
 
 '''''
 def interaction_analysis():
@@ -48,22 +48,19 @@ def interaction_analysis():
     print(dataset['prod_acc_rate'])
     # Finish In(9)/ Birdie shape link
 '''''
-
+'''''
 # drop NaN
 dataset.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
 dataset = dataset.reset_index()
+'''''
 
-# drop index column
-dataset.drop(["index"], axis=1, inplace=True)
+dataset.drop('Unnamed: 0', axis=1, inplace=True)
+
+# fill NaN with mean
+mean = dataset.Close_Value.mean()
+dataset.Close_Value.fillna(mean, inplace=True)
 
 dataset_len = len(dataset)
-
-'''''
-def plot_product_close_value():
-    f, ax = plt.subplots(figsize=(12, 12))
-    sb.boxplot(x='Product', y='Close_Value', hue='Stage', data=dataset, ax=ax)
-    plt.show()
-'''''
 
 
 def new_feature():
