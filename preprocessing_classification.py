@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
@@ -65,13 +65,13 @@ dataset_len = len(dataset)
 
 def new_feature():
     global dataset
-    '''''
+
     # opportunity Win rate for a sales rep --> dataset['win_rate']
     for agent in dataset['Agent'].unique():
         dataset.loc[(dataset['Agent'] == agent), 'win_rate'] = (
                     (dataset['Stage'] == 'Won').where(dataset['Agent'] == agent).sum() / (
                         dataset['Agent'] == agent).sum())
-    '''''
+
     # date difference between dates in data --> dataset['DateDiff']
     date_format = "%m/%d/%Y"
     dataset['Close Date'] = pd.to_datetime(dataset['Close Date'], date_format)
@@ -118,6 +118,8 @@ def correlation_matrix():
     dataset_class.reset_index(drop=True, inplace=True)
     dataset_class = dataset_class.drop(['Customer', 'Agent', 'SalesAgentEmailID', 'ContactEmailID',
                                         'Created Date', 'Close Date', 'avg_sale_cyc'], axis=1)
+    # print(dataset_class.head())
+
     # Label Binarizer
     lb = LabelBinarizer()
     lb.fit_transform(dataset_class['Stage'])
@@ -132,13 +134,14 @@ def correlation_matrix():
     dataset_class = OHE(dataset_class, products)
     progress_dataset = OHE(progress_dataset, products)
 
+    '''''
     # corr and plot
     correlation = dataset_class.corr()
     plt.figure(figsize=(14, 14))
     sb.heatmap(data=correlation, square=True, annot=True, vmin=-1, vmax=1, center=0,
                cmap='coolwarm', annot_kws={"size": 15}, linewidths=2, linecolor='black', )
     plt.show()
-
+    '''''
     return dataset_class, deal_class, progress_dataset
 
 
@@ -149,14 +152,14 @@ lb.fit_transform(dataset_class.values.tolist())
 
 # train
 # default test_size = 0.25
-X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, test_size=0.2, random_state=0)
 
 
 def print_report(name, y_test_internal, pred_internal):
     # print report
     print('*** {} Classification Report ***'.format(name), end='\n\n')
-    print('Confusion Matrix:\n', confusion_matrix(y_test_internal, pred_internal), end='\n\n')
-    print('Classification Report:\n', classification_report(y_test_internal, pred_internal), end='\n\n')
+    # print('Confusion Matrix:\n', confusion_matrix(y_test_internal, pred_internal), end='\n\n')
+    # print('Classification Report:\n', classification_report(y_test_internal, pred_internal), end='\n\n')
     print('Accuracy:\n', accuracy_score(y_test_internal, pred_internal), end='\n\n')
 
 
@@ -189,6 +192,7 @@ def random_forest():
     pred = rf_classifier.predict(X_test)
 
     # printing the confusion matrix
+    '''''
     LABELS = ['Won', 'Lost']
     conf_matrix = confusion_matrix(y_test, pred)
     plt.figure(figsize=(12, 12))
@@ -198,6 +202,7 @@ def random_forest():
     plt.ylabel('True class')
     plt.xlabel('Predicted class')
     plt.show()
+    '''''
     # print report
     print_report("Random Forest", y_test, pred)
 
@@ -232,29 +237,40 @@ def gaussian_naive_bayes():
     print_report("Gaussian Naive Bayes", y_test, pred)
 
 
-gaussian_naive_bayes()
+# gaussian_naive_bayes()
 
 
 def knn():
     # # train
     # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
 
+    '''''
     # dimensionality reduction
     pca = make_pipeline(StandardScaler(),
                         PCA(n_components=2))
     pca.fit(X_train, y_train)
+    '''''
 
     knn_classifier = KNeighborsClassifier()
     knn_classifier.fit(X_train, y_train)
-
+    '''''
     # dimensionality reduction and show plot
     X_embedded = pca.transform(X_train)
     plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=['red' if item == 'Won' else 'blue' for item in y_train.tolist()],
                 s=30, cmap='Set1')
     plt.show()
-
+    '''''
     pred = knn_classifier.predict(X_test)
 
+    print()
+    list_prediction = list(pred)
+    result = []
+    for a in list_prediction:
+        if a == 'Won':
+            result.append(1)
+        else:
+            result.append(0)
+    print(result)
     print_report("KNN", y_test.values, pred)
 
 
