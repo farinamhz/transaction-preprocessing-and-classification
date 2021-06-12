@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score, validation_curve
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
@@ -15,11 +15,15 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
-
 # read_data
 interactions = pd.read_excel('interactions.xlsx')
-dataset = pd.read_excel('dataset.xls')
+
+
+def read_data():
+    return pd.read_excel('dataset.xls')
+
+
+dataset = read_data()
 
 '''''
 def interaction_analysis():
@@ -54,23 +58,27 @@ dataset.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
 dataset = dataset.reset_index()
 '''''
 
-dataset.drop('Unnamed: 0', axis=1, inplace=True)
 
-# fill NaN with mean
-mean = dataset.Close_Value.mean()
-dataset.Close_Value.fillna(mean, inplace=True)
+def preprocess(dataset):
+    dataset.drop('Unnamed: 0', axis=1, inplace=True)
+    # fill NaN with mean
+    # mean = dataset.Close_Value.mean()
+    # dataset.Close_Value.fillna(mean, inplace=True)
 
-dataset_len = len(dataset)
+    # fill NaN with mean of each product
+    dataset["Close_Value"] = dataset.groupby("Product").transform(lambda x: x.fillna(x.mean()))
+    return dataset
 
 
-def new_feature():
-    global dataset
+dataset = preprocess(dataset)
 
+
+def new_feature(dataset):
     # opportunity Win rate for a sales rep --> dataset['win_rate']
     for agent in dataset['Agent'].unique():
         dataset.loc[(dataset['Agent'] == agent), 'win_rate'] = (
-                    (dataset['Stage'] == 'Won').where(dataset['Agent'] == agent).sum() / (
-                        dataset['Agent'] == agent).sum())
+                (dataset['Stage'] == 'Won').where(dataset['Agent'] == agent).sum() / (
+                dataset['Agent'] == agent).sum())
 
     # date difference between dates in data --> dataset['DateDiff']
     date_format = "%m/%d/%Y"
@@ -85,13 +93,20 @@ def new_feature():
             dataset['Product'] == prod).sum() / ((dataset['Product']
                                                   == prod).where(dataset['Stage'] == 'Won').sum())
     # print(dataset.head())
+    for i in range(0, len(dataset)):
+        if dataset.loc[i, 'DateDiff'] < dataset.loc[i, 'avg_sale_cyc']:
+            dataset.loc[i, 'DateDiff'] = 1
+        else:
+            dataset.loc[i, 'DateDiff'] = 0
+    return dataset
 
 
-new_feature()
+dataset = new_feature(dataset)
 
 
 # function to one hot encode columns
-def OHE(df, col):
+def encoder(df, col):
+    OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
     encprod = pd.DataFrame(OH_enc.fit_transform(df[col]))
     encprod.index = df.index
     encprod.columns = OH_enc.get_feature_names(col)
@@ -101,13 +116,9 @@ def OHE(df, col):
 
 
 # PreProcessing and Correlation matrix
-def correlation_matrix():
-    global dataset, dataset_len
-    for i in range(0, dataset_len):
-        if dataset.loc[i, 'DateDiff'] < dataset.loc[i, 'avg_sale_cyc']:
-            dataset.loc[i, 'DateDiff'] = 1
-        else:
-            dataset.loc[i, 'DateDiff'] = 0
+def preprocess_2():
+    global dataset
+
     # dataset_class includes won or lost AND progress_class includes In progress
     dataset_class = dataset
     progress_dataset = dataset.loc[dataset.Stage == 'In Progress', dataset.columns]
@@ -131,8 +142,8 @@ def correlation_matrix():
     products = list(s[s].index)
 
     # getting one on encoded columns
-    dataset_class = OHE(dataset_class, products)
-    progress_dataset = OHE(progress_dataset, products)
+    dataset_class = encoder(dataset_class, products)
+    progress_dataset = encoder(progress_dataset, products)
 
     '''''
     # corr and plot
@@ -145,7 +156,7 @@ def correlation_matrix():
     return dataset_class, deal_class, progress_dataset
 
 
-dataset_class, deal_class, progress_dataset = correlation_matrix()
+dataset_class, deal_class, progress_dataset = preprocess_2()
 
 lb = MultiLabelBinarizer()
 lb.fit_transform(dataset_class.values.tolist())
@@ -163,27 +174,27 @@ def print_report(name, y_test_internal, pred_internal):
     print('Accuracy:\n', accuracy_score(y_test_internal, pred_internal), end='\n\n')
 
 
-'''''
-def logistic_regression():
-    # train
-    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
-
-    lr = LogisticRegression()
-    lr.fit(X_train, y_train)
-    pred = lr.predict(X_test)
-
-    # print report
-    print_report("Logistic Regression", y_test, pred)
-
-
-logistic_regression()
-'''''
-
-
 def random_forest():
     # # train
     # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
-
+    '''''
+    train_scoreNum, test_scoreNum = validation_curve(
+        RandomForestClassifier(),
+        X=X_train, y=y_train,
+        param_name='n_estimators',
+        param_range=np.arange(1, 1000),
+        cv=3, scoring="accuracy")
+    plt.plot(np.arange(1, 1000), train_scoreNum,
+             marker='o', markersize=5,
+             color='blue', label='Training Accuracy')
+    plt.plot(np.arange(1, 1000), test_scoreNum,
+             marker='o', markersize=5,
+             color='green', label='Validation Accuracy')
+    plt.xlabel('Parameter C')
+    plt.ylabel('Accuracy')
+    plt.grid()
+    plt.show()
+    '''''
     rf_classifier = RandomForestClassifier()
 
     # print(np.mean(cross_val_score(clf, X_train, y_train, cv=10)))
@@ -237,7 +248,7 @@ def gaussian_naive_bayes():
     print_report("Gaussian Naive Bayes", y_test, pred)
 
 
-# gaussian_naive_bayes()
+gaussian_naive_bayes()
 
 
 def knn():
@@ -246,12 +257,11 @@ def knn():
 
     '''''
     # dimensionality reduction
-    pca = make_pipeline(StandardScaler(),
-                        PCA(n_components=2))
+    pca = make_pipeline(StandardScaler(), PCA(n_components=2))
     pca.fit(X_train, y_train)
     '''''
 
-    knn_classifier = KNeighborsClassifier()
+    knn_classifier = KNeighborsClassifier(n_neighbors=5)
     knn_classifier.fit(X_train, y_train)
     '''''
     # dimensionality reduction and show plot
