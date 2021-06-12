@@ -3,6 +3,7 @@ import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
 from sklearn import *
+import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, validation_curve
 from sklearn.naive_bayes import GaussianNB
@@ -200,7 +201,15 @@ def random_forest():
     # print(np.mean(cross_val_score(clf, X_train, y_train, cv=10)))
 
     rf_classifier.fit(X_train, y_train)
-    pred = rf_classifier.predict(X_test)
+
+    # Save the model as a pickle in a file
+    joblib.dump(rf_classifier, 'resources/best_model.pkl')
+
+    # Load the model from the file
+    rf_classifier_from_joblib = joblib.load('resources/best_model.pkl')
+
+    # Use the loaded model to make predictions
+    pred = rf_classifier_from_joblib.predict(X_test)
 
     # predicting for in progress deals
     # pre_inprogress = rf_classifier.predict(progress_dataset)
