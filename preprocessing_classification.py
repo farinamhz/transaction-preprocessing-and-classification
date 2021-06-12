@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
+from sklearn import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, validation_curve
 from sklearn.naive_bayes import GaussianNB
@@ -77,8 +78,7 @@ def new_feature(dataset):
     # opportunity Win rate for a sales rep --> dataset['win_rate']
     for agent in dataset['Agent'].unique():
         dataset.loc[(dataset['Agent'] == agent), 'win_rate'] = (
-                (dataset['Stage'] == 'Won').where(dataset['Agent'] == agent).sum() / (
-                dataset['Agent'] == agent).sum())
+                (dataset['Stage'] == 'Won').where(dataset['Agent'] == agent).sum() / (dataset['Agent'] == agent).sum())
 
     # date difference between dates in data --> dataset['DateDiff']
     date_format = "%m/%d/%Y"
@@ -202,6 +202,15 @@ def random_forest():
     rf_classifier.fit(X_train, y_train)
     pred = rf_classifier.predict(X_test)
 
+    # predicting for in progress deals
+    # pre_inprogress = rf_classifier.predict(progress_dataset)
+    # pre_dataset = dataset.loc[dataset.Deal_Stage == 'In Progress', dataset.columns]
+    # pre_dataset.reset_index(drop=True, inplace=True)
+    # pre = pd.Series(pre_inprogress)
+    # pre.value_counts()
+    # pre_dataset = pd.concat([pre_dataset, pre], axis=1)
+    # print(pre_dataset.head(100))
+
     # printing the confusion matrix
     '''''
     LABELS = ['Won', 'Lost']
@@ -214,6 +223,7 @@ def random_forest():
     plt.xlabel('Predicted class')
     plt.show()
     '''''
+
     # print report
     print_report("Random Forest", y_test, pred)
 
