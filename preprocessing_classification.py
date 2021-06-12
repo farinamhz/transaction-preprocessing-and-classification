@@ -21,11 +21,11 @@ from sklearn.preprocessing import StandardScaler
 interactions = pd.read_excel('interactions.xlsx')
 
 
-def read_data():
-    return pd.read_excel('dataset.xls')
+def read_data(path):
+    return pd.read_excel(path)
 
 
-dataset = read_data()
+dataset = read_data('dataset.xls')
 
 '''''
 def interaction_analysis():
@@ -206,10 +206,8 @@ def random_forest():
     joblib.dump(rf_classifier, 'resources/best_model.pkl')
 
     # Load the model from the file
-    rf_classifier_from_joblib = joblib.load('resources/best_model.pkl')
-
-    # Use the loaded model to make predictions
-    pred = rf_classifier_from_joblib.predict(X_test)
+    # rf_classifier_from_joblib = joblib.load('resources/best_model.pkl')
+    # pred = rf_classifier_from_joblib.predict(X_test)
 
     # predicting for in progress deals
     # pre_inprogress = rf_classifier.predict(progress_dataset)
@@ -234,7 +232,7 @@ def random_forest():
     '''''
 
     # print report
-    print_report("Random Forest", y_test, pred)
+    # print_report("Random Forest", y_test, pred)
 
 
 random_forest()
@@ -252,7 +250,7 @@ def decision_tree():
     print_report("Decision Tree", y_test, pred)
 
 
-decision_tree()
+# decision_tree()
 
 
 def gaussian_naive_bayes():
@@ -267,7 +265,7 @@ def gaussian_naive_bayes():
     print_report("Gaussian Naive Bayes", y_test, pred)
 
 
-gaussian_naive_bayes()
+# gaussian_naive_bayes()
 
 
 def knn():
@@ -302,5 +300,4 @@ def knn():
     print(result)
     print_report("KNN", y_test.values, pred)
 
-
-knn()
+# knn()
