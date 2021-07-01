@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split, cross_val_score, validatio
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, MultiLabelBinarizer, LabelEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
@@ -17,15 +17,9 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-# read_data
-interactions = pd.read_excel('interactions.xlsx')
-
 
 def read_data(path):
     return pd.read_excel(path)
-
-
-dataset = read_data('dataset.xls')
 
 '''''
 def interaction_analysis():
@@ -62,17 +56,11 @@ dataset = dataset.reset_index()
 
 
 def preprocess(dataset):
-    dataset.drop('Unnamed: 0', axis=1, inplace=True)
-    # fill NaN with mean
-    # mean = dataset.Close_Value.mean()
-    # dataset.Close_Value.fillna(mean, inplace=True)
+    # dataset.drop('Unnamed: 0', axis=1, inplace=True)
 
     # fill NaN with mean of each product
     dataset["Close_Value"] = dataset.groupby("Product").transform(lambda x: x.fillna(x.mean()))
     return dataset
-
-
-dataset = preprocess(dataset)
 
 
 def new_feature(dataset):
@@ -102,49 +90,24 @@ def new_feature(dataset):
     return dataset
 
 
-dataset = new_feature(dataset)
-
-
-# function to one hot encode columns
-def encoder(df, col):
-    OH_enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
-    encprod = pd.DataFrame(OH_enc.fit_transform(df[col]))
-    encprod.index = df.index
-    encprod.columns = OH_enc.get_feature_names(col)
-    df = pd.concat([df, encprod], axis=1)
-    df = df.drop(col, axis=1)
-    return df
-
-
 # PreProcessing and Correlation matrix
 def preprocess_2():
     global dataset
 
     # dataset_class includes won or lost AND progress_class includes In progress
     dataset_class = dataset
-    progress_dataset = dataset.loc[dataset.Stage == 'In Progress', dataset.columns]
-    progress_dataset.reset_index(drop=True, inplace=True)
-    progress_dataset = progress_dataset.drop(['Customer', 'Agent', 'SalesAgentEmailID', 'ContactEmailID', 'Stage',
-                                              'Created Date', 'Close Date', 'avg_sale_cyc'], axis=1)
     dataset_class = dataset_class.loc[dataset_class.Stage != 'In Progress', dataset_class.columns]
     dataset_class.reset_index(drop=True, inplace=True)
     dataset_class = dataset_class.drop(['Customer', 'Agent', 'SalesAgentEmailID', 'ContactEmailID',
                                         'Created Date', 'Close Date', 'avg_sale_cyc'], axis=1)
-    # print(dataset_class.head())
 
     # Label Binarizer
-    lb = LabelBinarizer()
-    lb.fit_transform(dataset_class['Stage'])
+    # lb = LabelBinarizer()
+    # lb.fit_transform(dataset_class['Stage'])
     deal_class = dataset_class['Stage']
     dataset_class = dataset_class.drop(['Stage'], axis=1)
 
-    # get products
-    s = (dataset_class.dtypes == 'object')
-    products = list(s[s].index)
-
-    # getting one on encoded columns
-    dataset_class = encoder(dataset_class, products)
-    progress_dataset = encoder(progress_dataset, products)
+    dataset_class = dataset_class.join(pd.get_dummies(dataset_class['Product'])).drop('Product', axis=1)
 
     '''''
     # corr and plot
@@ -154,30 +117,18 @@ def preprocess_2():
                cmap='coolwarm', annot_kws={"size": 15}, linewidths=2, linecolor='black', )
     plt.show()
     '''''
-    return dataset_class, deal_class, progress_dataset
-
-
-dataset_class, deal_class, progress_dataset = preprocess_2()
-
-lb = MultiLabelBinarizer()
-lb.fit_transform(dataset_class.values.tolist())
-
-# train
-# default test_size = 0.25
-X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, test_size=0.2, random_state=0)
+    return dataset_class, deal_class
 
 
 def print_report(name, y_test_internal, pred_internal):
     # print report
     print('*** {} Classification Report ***'.format(name), end='\n\n')
-    # print('Confusion Matrix:\n', confusion_matrix(y_test_internal, pred_internal), end='\n\n')
-    # print('Classification Report:\n', classification_report(y_test_internal, pred_internal), end='\n\n')
+    print('Confusion Matrix:\n', confusion_matrix(y_test_internal, pred_internal), end='\n\n')
+    print('Classification Report:\n', classification_report(y_test_internal, pred_internal), end='\n\n')
     print('Accuracy:\n', accuracy_score(y_test_internal, pred_internal), end='\n\n')
 
 
 def random_forest():
-    # # train
-    # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
     '''''
     train_scoreNum, test_scoreNum = validation_curve(
         RandomForestClassifier(),
@@ -196,46 +147,20 @@ def random_forest():
     plt.grid()
     plt.show()
     '''''
-    rf_classifier = RandomForestClassifier()
-
+    rf_classifier = RandomForestClassifier(n_jobs=-1)
     # print(np.mean(cross_val_score(clf, X_train, y_train, cv=10)))
-
     rf_classifier.fit(X_train, y_train)
 
     # Save the model as a pickle in a file
     joblib.dump(rf_classifier, 'resources/best_model.pkl')
+    print("Successful")
 
     # Load the model from the file
     # rf_classifier_from_joblib = joblib.load('resources/best_model.pkl')
     # pred = rf_classifier_from_joblib.predict(X_test)
 
-    # predicting for in progress deals
-    # pre_inprogress = rf_classifier.predict(progress_dataset)
-    # pre_dataset = dataset.loc[dataset.Deal_Stage == 'In Progress', dataset.columns]
-    # pre_dataset.reset_index(drop=True, inplace=True)
-    # pre = pd.Series(pre_inprogress)
-    # pre.value_counts()
-    # pre_dataset = pd.concat([pre_dataset, pre], axis=1)
-    # print(pre_dataset.head(100))
-
-    # printing the confusion matrix
-    '''''
-    LABELS = ['Won', 'Lost']
-    conf_matrix = confusion_matrix(y_test, pred)
-    plt.figure(figsize=(12, 12))
-    sb.heatmap(conf_matrix, xticklabels=LABELS,
-               yticklabels=LABELS, annot=True, fmt="d", cmap='coolwarm')
-    plt.title("Confusion matrix")
-    plt.ylabel('True class')
-    plt.xlabel('Predicted class')
-    plt.show()
-    '''''
-
-    # print report
-    # print_report("Random Forest", y_test, pred)
-
-
-random_forest()
+    pred = rf_classifier.predict(X_test)
+    print_report("Random Forest", y_test, pred)
 
 
 def decision_tree():
@@ -250,9 +175,6 @@ def decision_tree():
     print_report("Decision Tree", y_test, pred)
 
 
-# decision_tree()
-
-
 def gaussian_naive_bayes():
     # # train
     # X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, random_state=0)
@@ -263,9 +185,6 @@ def gaussian_naive_bayes():
 
     # print report
     print_report("Gaussian Naive Bayes", y_test, pred)
-
-
-# gaussian_naive_bayes()
 
 
 def knn():
@@ -289,15 +208,28 @@ def knn():
     '''''
     pred = knn_classifier.predict(X_test)
 
-    print()
-    list_prediction = list(pred)
-    result = []
-    for a in list_prediction:
-        if a == 'Won':
-            result.append(1)
-        else:
-            result.append(0)
-    print(result)
+    # print()
+    # list_prediction = list(pred)
+    # result = []
+    # for a in list_prediction:
+    #     if a == 'Won':
+    #         result.append(1)
+    #     else:
+    #         result.append(0)
+    # print(result)
     print_report("KNN", y_test.values, pred)
 
-# knn()
+
+if __name__ == "__main__":
+    dataset = read_data('dataset.xls')
+    dataset = preprocess(dataset)
+    dataset = new_feature(dataset)
+    dataset_class, deal_class = preprocess_2()
+    # lb = MultiLabelBinarizer()
+    # lb.fit_transform(dataset_class.values.tolist())
+
+    X_train, X_test, y_train, y_test = train_test_split(dataset_class, deal_class, test_size=0.2, random_state=0)
+    random_forest()
+    # decision_tree()
+    # gaussian_naive_bayes()
+    # knn()

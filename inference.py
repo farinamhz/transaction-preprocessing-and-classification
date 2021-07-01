@@ -25,28 +25,31 @@ def inference(path):
     result = []
 
     dataset = read_data(path)
+    deal_class = dataset['Stage']
 
     # ''''''
-    first = []
-    list_prediction = list(dataset['Stage'])
-    for a in list_prediction:
-        if a == 'Won':
-            first.append(1)
-        elif a == 'Lost':
-            first.append(0)
-        else:
-            first.append(3)
-    print(first)
+    # first = []
+    # list_prediction = list(dataset['Stage'])
+    # for a in list_prediction:
+    #     if a == 'Won':
+    #         first.append(1)
+    #     elif a == 'Lost':
+    #         first.append(0)
+    #     else:
+    #         first.append(3)
+    # print(first)
     # '''''
     dataset = preprocess(dataset)
     dataset = new_feature(dataset)
     # get products
     dataset = dataset.drop(['Customer', 'Agent', 'SalesAgentEmailID', 'ContactEmailID',
                             'Created Date', 'Close Date', 'avg_sale_cyc', 'Stage'], axis=1)
-    s = (dataset.dtypes == 'object')
-    products = list(s[s].index)
-    # getting one on encoded columns
-    dataset = encoder(dataset, products)
+    # dataset = dataset.drop(['Customer', 'Agent', 'SalesAgentEmailID', 'ContactEmailID',
+    #                         'Created Date', 'Close Date', 'avg_sale_cyc'], axis=1)
+    # s = (dataset.dtypes == 'object')
+    # products = list(s[s].index)
+    # dataset = encoder(dataset, products)
+    dataset = dataset.join(pd.get_dummies(dataset['Product'])).drop('Product', axis=1)
 
     pred = model.predict(dataset)
 
@@ -57,8 +60,8 @@ def inference(path):
         else:
             result.append(0)
     print(result)
-
+    print('Accuracy:\n', accuracy_score(deal_class, pred), end='\n\n')
     return result
 
 
-inference("dataset.xls")
+inference("test.xls")
